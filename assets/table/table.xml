@@ -1,0 +1,26 @@
+<mujoco model="table">
+  <default>
+    <default class="visual">
+      <geom group="2" type="mesh" contype="0" conaffinity="0"/>
+    </default>
+    <default class="collision">
+      <geom group="3"/>
+    </default>
+  </default>
+  <asset>
+    <material name="TableLeg" specular="0.5" shininess="0.81" rgba="0.800000 0.800000 0.800000 1.000000"/>
+    <texture type="2d" name="table_Color" file="table_Color.png"/>
+    <material name="TableTop" texture="table_Color" specular="0.5" shininess="0.25"/>
+    <mesh file="table_0.obj" scale="1.75 1.75 1.75"/>
+    <mesh file="table_1.obj" scale="1.75 1.75 1.75"/>
+    <!-- <mesh file="table_0.obj"/>
+    <mesh file="table_1.obj"/> -->
+  </asset>
+  <worldbody>
+    <body name="table">
+      <geom name="table_0" mesh="table_0" material="TableLeg" class="visual"/>
+      <geom name="table_1" mesh="table_1" material="TableTop" class="visual"/>
+      <geom type="box" size="1.209 0.6045 0.45982145" pos="0 0 0.45982145" class="collision"/>
+    </body>
+  </worldbody>
+</mujoco>

@@ -1,0 +1,7 @@
+/test_videos
+/demos
+*.onnx
+*.avi
+*.mp4
+/final_ckpt.pt
+/ppo_rgb.py

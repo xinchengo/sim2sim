@@ -5,3 +5,5 @@
 *.mp4
 /final_ckpt.pt
 /ppo_rgb.py
+/runs
+__pycache__

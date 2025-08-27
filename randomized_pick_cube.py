@@ -16,8 +16,8 @@ from mani_skill.utils.scene_builder.table import TableSceneBuilder
 from mani_skill.utils.structs.pose import Pose
 
 
-@register_env("PickCube-v1", max_episode_steps=50)
-class PickCubeEnv(BaseEnv):
+@register_env("PickCube-v1-DR", max_episode_steps=50)
+class RandomizedPickCubeEnv(BaseEnv):
     """
     **Task Description:**
     A simple task where the objective is to grasp a red cube and move it to a target goal position. This is also the *baseline* task to test whether a robot with manipulation
@@ -62,13 +62,17 @@ class PickCubeEnv(BaseEnv):
         self.human_cam_eye_pos = cfg["human_cam_eye_pos"]
         self.human_cam_target_pos = cfg["human_cam_target_pos"]
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
-
+    
     @property
     def _default_sensor_configs(self):
-        pose = sapien_utils.look_at(
-            eye=self.sensor_cam_eye_pos, target=self.sensor_cam_target_pos
-        )
-        return [CameraConfig("base_camera", pose, 128, 128, np.pi / 2, 0.01, 100)]
+        # Modified to enable camera randomization during episode randomization
+        return [
+            CameraConfig(
+                "base_camera", pose=sapien.Pose(), width=128, height=128, 
+                fov=np.pi / 2, near=0.01, far=100, 
+                mount=self.cam_mount
+            )
+        ]
 
     @property
     def _default_human_render_camera_configs(self):
@@ -103,6 +107,31 @@ class PickCubeEnv(BaseEnv):
         )
         self._hidden_objects.append(self.goal_site)
 
+        # Added to enable camera randomization during episode randomization
+        self.cam_mount = self.scene.create_actor_builder().build_kinematic("camera_mount")
+
+        # Added to enable controller randomization
+        for joint in self.agent.robot.joints:
+            for obj in joint._objs:
+                # Skip if DOF is zero
+                if torch.all(joint.dof == 0):
+                    continue
+
+                stiffness = obj.get_stiffness() * np.random.rand() * 0.2 + 0.9
+                damping = obj.get_damping() * np.random.rand() * 0.2 + 0.9
+                force_limit = obj.get_force_limit() * np.random.rand() * 0.2 + 0.9
+                friction = obj.get_friction() * np.random.rand() * 0.2 + 0.9
+                obj.set_drive_properties(stiffness=stiffness, damping=damping, force_limit=force_limit)
+                obj.set_friction(friction=friction)
+
+    # Added lighting randomization
+    import numpy as np
+    def _load_lighting(self, options: dict):
+        for scene in self.scene.sub_scenes:
+            scene.ambient_light = [np.random.uniform(0.2, 0.6), np.random.uniform(0.2, 0.6), np.random.uniform(0.2, 0.6)]
+            scene.add_directional_light([1, 1, -1], [1, 1, 1], shadow=True, shadow_scale=5, shadow_map_size=4096)
+            scene.add_directional_light([0, 0, -1], [1, 1, 1])
+    
     def _initialize_episode(self, env_idx: torch.Tensor, options: dict):
         with torch.device(self.device):
             b = len(env_idx)
@@ -128,6 +157,19 @@ class PickCubeEnv(BaseEnv):
             goal_xyz[:, 1] += self.cube_spawn_center[1]
             goal_xyz[:, 2] = torch.rand((b)) * self.max_goal_height + xyz[:, 2]
             self.goal_site.set_pose(Pose.create_from_pq(goal_xyz))
+        
+            # Added to enable camera randomization during episode randomization
+            pose = sapien_utils.look_at(
+                eye=self.sensor_cam_eye_pos, target=self.sensor_cam_target_pos
+            )
+            pose = Pose.create(pose)
+            pose = pose * Pose.create_from_pq(
+                p=torch.rand((self.num_envs, 3)) * 0.05 - 0.025,
+                q=randomization.random_quaternions(
+                    n=self.num_envs, device=self.device, bounds=(-np.pi / 24, np.pi / 24)
+                ),
+            )
+            self.cam_mount.set_pose(pose)
 
     def _get_obs_extra(self, info: Dict):
         # in reality some people hack is_grasped into observations by checking if the gripper can close fully or not
@@ -189,12 +231,3 @@ class PickCubeEnv(BaseEnv):
         self, obs: Any, action: torch.Tensor, info: Dict
     ):
         return self.compute_dense_reward(obs=obs, action=action, info=info) / 5
-
-
-@register_env("PickCubeSO100-v1", max_episode_steps=50)
-class PickCubeSO100Env(PickCubeEnv):
-
-    _sample_video_link = "https://github.com/haosulab/ManiSkill/raw/main/figures/environment_demos/PickCubeSO100-v1_rt.mp4"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, robot_uids="so100", **kwargs)

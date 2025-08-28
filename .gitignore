@@ -4,5 +4,6 @@
 *.avi
 *.mp4
 /final_ckpt.pt
+/wandb
 /runs
 __pycache__

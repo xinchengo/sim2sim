@@ -70,7 +70,8 @@ class RandomizedPickCubeEnv(BaseEnv):
             CameraConfig(
                 "base_camera", pose=sapien.Pose(), width=128, height=128, 
                 fov=np.pi / 2, near=0.01, far=100, 
-                mount=self.cam_mount
+                mount=self.cam_mount,
+                shader_pack="minimal"
             )
         ]
 
@@ -79,7 +80,8 @@ class RandomizedPickCubeEnv(BaseEnv):
         pose = sapien_utils.look_at(
             eye=self.human_cam_eye_pos, target=self.human_cam_target_pos
         )
-        return CameraConfig("render_camera", pose, 512, 512, 1, 0.01, 100)
+        return CameraConfig("render_camera", pose, 512, 512, 1, 0.01, 100,
+                            shader_pack="minimal")
 
     def _load_agent(self, options: dict):
         super()._load_agent(options, sapien.Pose(p=[-0.615, 0, 0]))
@@ -164,9 +166,11 @@ class RandomizedPickCubeEnv(BaseEnv):
             )
             pose = Pose.create(pose)
             pose = pose * Pose.create_from_pq(
-                p=torch.rand((self.num_envs, 3)) * 0.05 - 0.025,
+                # Use the number of envs being reset (b), not total num_envs,
+                # to avoid broadcasting a [num_envs,7] pose into a single-env slice.
+                p=torch.rand((b, 3)) * 0.05 - 0.025,
                 q=randomization.random_quaternions(
-                    n=self.num_envs, device=self.device, bounds=(-np.pi / 24, np.pi / 24)
+                    n=b, device=self.device, bounds=(-np.pi / 24, np.pi / 24)
                 ),
             )
             self.cam_mount.set_pose(pose)

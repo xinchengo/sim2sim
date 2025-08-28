@@ -4,6 +4,7 @@
 *.avi
 *.mp4
 /final_ckpt.pt
+/policy_without_dr.pt
 /wandb
 /runs
 __pycache__

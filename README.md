@@ -49,3 +49,7 @@ Doing this can be broken down into several steps:
     The script is `run_onnx_policy.py`.
 
 ## Domain Randomization
+
+## Curriculum Learning
+
+

@@ -50,6 +50,12 @@ Doing this can be broken down into several steps:
 
 ## Domain Randomization
 
+1. Camera randomization (camera pose)
+2. Joint randomization (stiffness, friction... of the joints)
+3. Lighting randomization (lighting)
+
 ## Curriculum Learning
+
+As training a policy capable of domain randomization from scratch is too difficult, I adopted a curriculum-learning approach.
 
 

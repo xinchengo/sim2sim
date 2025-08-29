@@ -16,8 +16,8 @@ from mani_skill.utils.scene_builder.table import TableSceneBuilder
 from mani_skill.utils.structs.pose import Pose
 
 
-@register_env("PickCube-v1-DR", max_episode_steps=50)
-class RandomizedPickCubeEnv(BaseEnv):
+@register_env("PickCube-v1-R-CJ", max_episode_steps=50)
+class RandomizedCameraJointPickCubeEnv(BaseEnv):
     """
     **Task Description:**
     A simple task where the objective is to grasp a red cube and move it to a target goal position. This is also the *baseline* task to test whether a robot with manipulation
@@ -125,14 +125,6 @@ class RandomizedPickCubeEnv(BaseEnv):
                 friction = obj.get_friction() * np.random.rand() * 0.2 + 0.9
                 obj.set_drive_properties(stiffness=stiffness, damping=damping, force_limit=force_limit)
                 obj.set_friction(friction=friction)
-
-    # Added lighting randomization
-    import numpy as np
-    def _load_lighting(self, options: dict):
-        for scene in self.scene.sub_scenes:
-            scene.ambient_light = [np.random.uniform(0.2, 0.6), np.random.uniform(0.2, 0.6), np.random.uniform(0.2, 0.6)]
-            scene.add_directional_light([1, 1, -1], [1, 1, 1], shadow=True, shadow_scale=5, shadow_map_size=4096)
-            scene.add_directional_light([0, 0, -1], [1, 1, 1])
     
     def _initialize_episode(self, env_idx: torch.Tensor, options: dict):
         with torch.device(self.device):

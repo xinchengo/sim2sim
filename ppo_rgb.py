@@ -23,7 +23,13 @@ from mani_skill.utils.wrappers.record import RecordEpisode
 from mani_skill.vector.wrappers.gymnasium import ManiSkillVectorEnv
 
 # Added custom task PickCube-v1-DR
-import randomized_pick_cube
+import tasks.pick_cube_r_c
+import tasks.pick_cube_r_j
+import tasks.pick_cube_r_l
+import tasks.pick_cube_r_cj
+import tasks.pick_cube_r_cl
+import tasks.pick_cube_r_jl
+import tasks.pick_cube_r_cjl
 
 @dataclass
 class Args:
